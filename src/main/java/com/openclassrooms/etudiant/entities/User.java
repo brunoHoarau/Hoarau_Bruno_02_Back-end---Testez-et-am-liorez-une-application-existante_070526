@@ -10,7 +10,10 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,10 +25,13 @@ import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+//@Data
+@Getter
+@Setter
 @Entity
-@Table(name = "user")
-public class User implements UserDetails {
+@Table(name = "users")
+//public class User implements UserDetails {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -56,33 +62,48 @@ public class User implements UserDetails {
     private LocalDateTime updated_at;
 
 
-    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
     }
 
-    @Override
     public String getUsername() {
         return login;
     }
 
-    @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
-    @Override
     public boolean isAccountNonLocked() {
         return true;
     }
 
-    @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
-    @Override
     public boolean isEnabled() {
         return true;
     }
+    
+    // Manque SetPassword/login et getPassword/login
+//
+//    public void setPassword(String password) {
+//        this.password = password;
+//    }
+//
+//	@Override
+//	public String getPassword() {
+//		// TODO Auto-generated method stub
+//		return password;
+//	}
+//	
+//	public void setLogin(String login) {
+//        this.login = login;
+//    }
+//
+//	public String getLogin() {
+//		// TODO Auto-generated method stub
+//		return login;
+//	}
 }

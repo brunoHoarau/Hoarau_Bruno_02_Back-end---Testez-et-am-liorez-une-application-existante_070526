@@ -16,42 +16,38 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(value = {IllegalArgumentException.class, IllegalStateException.class})
-    protected ResponseEntity<Object> handleConflict(RuntimeException runtimeException, WebRequest request) {
-        logError(runtimeException);
-        return handleExceptionInternal(runtimeException, getErrorDetails(runtimeException, request), new HttpHeaders(),
-                HttpStatus.BAD_REQUEST, request);
+	@ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorDetails> handleRuntime(RuntimeException ex, WebRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(buildError(ex, request));
     }
 
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorDetails> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
 
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler(value = {BadCredentialsException.class})
-    protected ResponseEntity<Object> handleBadCredentialsException(BadCredentialsException badCredentialsException,
-                                                                   WebRequest request) {
-        logError(badCredentialsException);
-        return handleExceptionInternal(badCredentialsException, getErrorDetails(badCredentialsException, request),
-                new HttpHeaders(), HttpStatus.UNAUTHORIZED, request);
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(buildError(ex, request));
     }
 
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    @ExceptionHandler(value = {AccessDeniedException.class})
-    protected ResponseEntity<Object> handleForbiddenException(AccessDeniedException accessDeniedException,
-                                                              WebRequest request) {
-        logError(accessDeniedException);
-        return handleExceptionInternal(accessDeniedException, getErrorDetails(accessDeniedException, request),
-                new HttpHeaders(), HttpStatus.FORBIDDEN, request);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorDetails> handleGeneric(Exception ex, WebRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(buildError(ex, request));
     }
 
-
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ExceptionHandler(value = {Exception.class})
-    protected ResponseEntity<Object> handleException(RuntimeException runtimeException, WebRequest request) {
-        logError(runtimeException);
-        return handleExceptionInternal(runtimeException, "Internal Server error", new HttpHeaders(),
-                HttpStatus.INTERNAL_SERVER_ERROR, request);
+    private ErrorDetails buildError(Exception ex, WebRequest request) {
+        return new ErrorDetails(
+                LocalDateTime.now(),
+                ex.getMessage(),
+                request.getDescription(false)
+        );
     }
-
+    
     private void logError(Exception exception) {
         logger.error(exception.getMessage(), exception);
     }

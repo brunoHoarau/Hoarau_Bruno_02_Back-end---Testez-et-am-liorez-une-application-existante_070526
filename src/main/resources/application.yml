@@ -10,6 +10,9 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
 logging:
   level:
@@ -29,3 +32,7 @@ management:
     web:
       exposure:
         include: '*'
+
+app:
+  cors:
+    allowed-origin: http://localhost:4200

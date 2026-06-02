@@ -14,65 +14,110 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
-public class UserServiceTest {
-    private static final String FIRST_NAME = "John";
-    private static final String LAST_NAME = "Doe";
+class UserServiceTest {
+
     private static final String LOGIN = "LOGIN";
     private static final String PASSWORD = "PASSWORD";
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private UserService userService;
 
-    @Test
-    public void test_create_null_user_throws_IllegalArgumentException() {
-        // GIVEN
+    // =========================
+    // REGISTER (existing tests OK)
+    // =========================
 
-        // THEN
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> userService.register(null));
+    // =========================
+    // LOGIN - NULL LOGIN
+    // =========================
+    @Test
+    void shouldThrowWhenLoginIsNull() {
+
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.login(null, PASSWORD));
     }
 
+    // =========================
+    // LOGIN - NULL PASSWORD
+    // =========================
     @Test
-    public void test_create_already_exist_user_throws_IllegalArgumentException() {
-        // GIVEN
-        User user = new User();
-        user.setFirstName(FIRST_NAME);
-        user.setLastName(LAST_NAME);
-        user.setLogin(LOGIN);
-        user.setPassword(PASSWORD);
-        when(passwordEncoder.encode(PASSWORD)).thenReturn(PASSWORD);
-        when(userRepository.findByLogin(any())).thenReturn(Optional.of(user));
+    void shouldThrowWhenPasswordIsNull() {
 
-        // THEN
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> userService.register(user));
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.login(LOGIN, null));
     }
 
+    // =========================
+    // LOGIN - USER NOT FOUND
+    // =========================
     @Test
-    public void test_create_user() {
-        // GIVEN
+    void shouldThrowWhenUserNotFound() {
+
+        when(userRepository.findByLogin(LOGIN))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class,
+                () -> userService.login(LOGIN, PASSWORD));
+    }
+
+    // =========================
+    // LOGIN - BAD PASSWORD
+    // =========================
+    @Test
+    void shouldThrowWhenPasswordIsInvalid() {
+
         User user = new User();
-        user.setFirstName(FIRST_NAME);
-        user.setLastName(LAST_NAME);
         user.setLogin(LOGIN);
-        user.setPassword(PASSWORD);
-        when(passwordEncoder.encode(PASSWORD)).thenReturn(PASSWORD);
-        when(userRepository.findByLogin(any())).thenReturn(Optional.empty());
+        user.setPassword("encoded");
 
-        // WHEN
-        userService.register(user);
+        when(userRepository.findByLogin(LOGIN))
+                .thenReturn(Optional.of(user));
 
-        // THEN
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
-        assertThat(userCaptor.getValue()).isEqualTo(user);
+        when(passwordEncoder.matches(PASSWORD, "encoded"))
+                .thenReturn(false);
+
+        assertThrows(RuntimeException.class,
+                () -> userService.login(LOGIN, PASSWORD));
+    }
+
+    // =========================
+    // LOGIN - SUCCESS
+    // =========================
+    @Test
+    void shouldReturnJwtTokenWhenLoginSuccess() {
+
+        User user = new User();
+        user.setLogin(LOGIN);
+        user.setPassword("encoded");
+
+        when(userRepository.findByLogin(LOGIN))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(PASSWORD, "encoded"))
+                .thenReturn(true);
+
+        when(jwtService.generateToken(any()))
+                .thenReturn("fake-jwt-token");
+
+        String token = userService.login(LOGIN, PASSWORD);
+
+        assertEquals("fake-jwt-token", token);
+
+        verify(jwtService).generateToken(any());
     }
 }

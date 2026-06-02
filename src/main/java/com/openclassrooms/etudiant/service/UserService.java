@@ -1,6 +1,7 @@
 package com.openclassrooms.etudiant.service;
 
 import com.openclassrooms.etudiant.entities.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import com.openclassrooms.etudiant.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -20,6 +25,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    
+    private static final Logger log =
+            LoggerFactory.getLogger(UserService.class);
 
     public void register(User user) {
         Assert.notNull(user, "User must not be null");
@@ -34,17 +42,25 @@ public class UserService {
     }
 
     public String login(String login, String password) {
-        Assert.notNull(login, "Login must not be null");
-        Assert.notNull(password, "Password must not be null");
-        Optional<User> user = userRepository.findByLogin(login);
-        if (user.isPresent() && passwordEncoder.matches(password, password)) {
-            UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
-                    .username(login).build();
-            return jwtService.generateToken(userDetails);
-        } else {
-            throw new IllegalArgumentException("Invalid credentials");
-        }
+    	Assert.notNull(login, "Login must not be null"); 
+    	Assert.notNull(password, "Password must not be null"); 
+    	User user = userRepository.findByLogin(login) 
+    			.orElseThrow(() -> new RuntimeException("Invalid credentials"));
+    	
+    	System.out.println("USER FOUND = " + user.getLogin());
+    	
+    	if (!passwordEncoder.matches(password, user.getPassword())) { 
+    		throw new RuntimeException("Invalid credentials"); 
+    	}
+    	
+    	UserDetails userDetails =
+    	        org.springframework.security.core.userdetails.User
+    	                .withUsername(user.getLogin())
+    	                .password(user.getPassword())
+    	                .authorities(List.of())
+    	                .build();
+    	
+    	return jwtService.generateToken(userDetails);
     }
-
 
 }
