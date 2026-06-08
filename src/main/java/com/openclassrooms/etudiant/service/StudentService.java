@@ -3,51 +3,88 @@ package com.openclassrooms.etudiant.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.openclassrooms.etudiant.dto.StudentDTO;
 import com.openclassrooms.etudiant.entities.Student;
+import com.openclassrooms.etudiant.mapper.StudentMapper;
 import com.openclassrooms.etudiant.repository.StudentRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class StudentService {
-	
+
     private final StudentRepository studentRepository;
+    private final StudentMapper studentMapper;
 
-    public Student create(com.openclassrooms.etudiant.entities.Student student) {
-        return studentRepository.save(student);
+    
+    /**
+     * Crée un nouvel étudiant.
+     *
+     * @param dto datum student
+     * @return student created
+     */
+    public StudentDTO create(StudentDTO dto) {
+        Student student = studentMapper.toEntity(dto);
+        Student saved = studentRepository.save(student);
+        return studentMapper.toDto(saved);
     }
 
-    public List<Student> findAll() {
-        return studentRepository.findAll();
+    
+    /**
+     * trouver étudiants pour list.
+     *
+     * @return list all students 
+     */
+    @Transactional(readOnly = true)
+    public List<StudentDTO> findAll() {
+        return studentRepository.findAll()
+                .stream()
+                .map(studentMapper::toDto)
+                .toList();
+    }
+    
+    
+    /**
+     * trouver étudiant par ID.
+     *
+     * @param id studnet
+     * @return student 
+     */
+    @Transactional(readOnly = true)
+    public StudentDTO findById(Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        return studentMapper.toDto(student);
     }
 
-    public Student findById(Long id) {
+    
+    /**
+     * MAJ étudiant 
+     *
+     * @param id, student datum
+     * @return student 
+     */
+     public StudentDTO update(Long id, StudentDTO dto) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        return studentRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Student not found"));
+        student.setFirstName(dto.getFirstName());
+        student.setEmail(dto.getEmail());
+
+        Student saved = studentRepository.save(student);
+        return studentMapper.toDto(saved);
     }
 
-    public Student update(Long id, com.openclassrooms.etudiant.entities.Student student2) {
-
-        Student student = findById(id);
-
-        student.setFirstName(student2.getFirstName());
-        student.setLastName(student2.getLastName());
-        student.setEmail(student2.getEmail());
-
-        return studentRepository.save(student);
-    }
-
+     /**
+      * supprimer étudiant par id 
+      *
+      * @param id
+      */
     public void delete(Long id) {
-
-        Student student = findById(id);
-
-        studentRepository.delete(student);
+        studentRepository.deleteById(id);
     }
-
 }

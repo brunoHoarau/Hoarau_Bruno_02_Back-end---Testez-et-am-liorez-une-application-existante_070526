@@ -1,5 +1,7 @@
 package com.openclassrooms.etudiant.service;
 
+import static org.mockito.ArgumentMatchers.any;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -11,7 +13,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.openclassrooms.etudiant.dto.StudentDTO;
 import com.openclassrooms.etudiant.entities.Student;
+import com.openclassrooms.etudiant.mapper.StudentMapper;
 import com.openclassrooms.etudiant.repository.StudentRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -21,22 +25,37 @@ public class StudentServiceTest {
 
 	 @Mock
 	 private StudentRepository studentRepository;
+	 
+	 @Mock
+	 private StudentMapper studentMapper;
 
 	    // Verifie creation student 
 	 @Test
 	 void shouldCreateStudent() {
 
 	    // Given
+	    StudentDTO dto = new StudentDTO();
+	    dto.setFirstName("John");
+	    dto.setLastName("Doe");
+	    dto.setEmail("john@mail.com");
+	    
 	    Student student = new Student();
+	    student.setId(1L);
 	    student.setFirstName("John");
 	    student.setLastName("Doe");
 	    student.setEmail("john@mail.com");
+	    
+	    Mockito.when(studentMapper.toEntity(dto))
+        .thenReturn(student);
 
-	    Mockito.when(studentRepository.save(Mockito.any(Student.class)))
+	    Mockito.when(studentRepository.save(any(Student.class)))
 	            .thenReturn(student);
+	    
+	    Mockito.when(studentMapper.toDto(student))
+        		.thenReturn(dto);
 
 	    // When
-	    Student result = studentService.create(student);
+	    StudentDTO result = studentService.create(dto);
 
 	    // Then
 	    Assertions.assertNotNull(result);
@@ -67,7 +86,7 @@ public class StudentServiceTest {
 	                .thenReturn(students);
 
 	        // When
-	        List<Student> result = studentService.findAll();
+	        List<StudentDTO> result = studentService.findAll();
 
 	        // Then
 	        Assertions.assertEquals(2, result.size());
@@ -82,12 +101,21 @@ public class StudentServiceTest {
 		    student.setFirstName("John");
 		    student.setLastName("Doe");
 		    student.setEmail("john@mail.com");
-
+		    
+		    StudentDTO dto = new StudentDTO();
+		    dto.setId(1L);
+		    dto.setFirstName("John");
+		    dto.setLastName("Doe");
+		    dto.setEmail("john@mail.com");
+		    
 	        Mockito.when(studentRepository.findById(1L))
 	                .thenReturn(Optional.of(student));
+	        
+	        Mockito.when(studentMapper.toDto(student))
+            		.thenReturn(dto);
 
 	        // When
-	        Student result = studentService.findById(1L);
+	        StudentDTO result = studentService.findById(1L);
 
 	        // Then
 	        Assertions.assertNotNull(result);
@@ -104,7 +132,13 @@ public class StudentServiceTest {
 		    student.setLastName("Doe");
 		    student.setEmail("john@mail.com");
 
+	        StudentDTO dto = new StudentDTO();
+	        dto.setFirstName("Updated");
+	        dto.setLastName("Name");
+	        dto.setEmail("updated@mail.com");
+	        
 	        Student updatedStudent = new Student();
+	        updatedStudent.setId(1L);
 	        updatedStudent.setFirstName("Updated");
 	        updatedStudent.setLastName("Name");
 	        updatedStudent.setEmail("updated@mail.com");
@@ -113,10 +147,13 @@ public class StudentServiceTest {
 	                .thenReturn(Optional.of(student));
 
 	        Mockito.when(studentRepository.save(Mockito.any(Student.class)))
-	                .thenReturn(student);
-
+            	.thenAnswer(invocation -> invocation.getArgument(0));
+	        
+	        Mockito.when(studentMapper.toDto(Mockito.any(Student.class)))
+            	.thenReturn(dto);
+	        
 	        // When
-	        Student result = studentService.update(1L, updatedStudent);
+	        StudentDTO result = studentService.update(1L, dto);
 
 	        // Then
 	        Assertions.assertEquals("Updated", result.getFirstName());

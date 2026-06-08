@@ -12,7 +12,13 @@ import com.openclassrooms.etudiant.entities.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 
-
+/**
+ * Repository permettant d'accéder aux données des étudiants.
+ *
+ * Fournit les opérations CRUD standard via JpaRepository.
+ *
+ * @see Student
+ */
 public interface StudentRepository extends JpaRepository<Student, Long>{
 
 }

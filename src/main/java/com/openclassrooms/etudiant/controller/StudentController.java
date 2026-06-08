@@ -11,6 +11,7 @@ import com.openclassrooms.etudiant.mapper.StudentMapper;
 import com.openclassrooms.etudiant.entities.Student;
 import com.openclassrooms.etudiant.service.StudentService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -19,64 +20,64 @@ import lombok.RequiredArgsConstructor;
 public class StudentController {
 
     private final StudentService studentService;
-    private final StudentMapper studentMapper;
 
-    // CREATE
+    /**
+     * Crée un nouvel étudiant.
+     *
+     * @param dto les données de l'étudiant à créer
+     * @return l'étudiant créé avec le statut HTTP 201 (CREATED)
+     */
     @PostMapping
-    public ResponseEntity<StudentDTO> create(@RequestBody StudentDTO dto) {
-
-        Student student = studentService.create(
-                studentMapper.toEntity(dto)
-        );
-
+    public ResponseEntity<StudentDTO> create(@Valid @RequestBody StudentDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(studentMapper.toDto(student));
+                .body(studentService.create(dto));
     }
 
-    // READ ALL
+    /**
+     * Récupère la liste de tous les étudiants.
+     *
+     * @return une liste d'étudiants avec le statut HTTP 200 (OK)
+     */
     @GetMapping
     public ResponseEntity<List<StudentDTO>> findAll() {
-
-        return ResponseEntity.ok(
-                studentMapper.toDtoList(
-                        studentService.findAll()
-                )
-        );
+        return ResponseEntity.ok(studentService.findAll());
     }
 
-    // READ ONE
+    /**
+     * Récupère un étudiant à partir de son identifiant.
+     *
+     * @param id identifiant de l'étudiant
+     * @return l'étudiant correspondant avec le statut HTTP 200 (OK)
+     */
     @GetMapping("/{id}")
     public ResponseEntity<StudentDTO> findById(@PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                studentMapper.toDto(
-                        studentService.findById(id)
-                )
-        );
+        return ResponseEntity.ok(studentService.findById(id));
     }
 
-    // UPDATE
+    /**
+     * Met à jour un étudiant existant.
+     *
+     * @param id identifiant de l'étudiant à modifier
+     * @param dto nouvelles données de l'étudiant
+     * @return l'étudiant mis à jour avec le statut HTTP 200 (OK)
+     */
     @PutMapping("/{id}")
     public ResponseEntity<StudentDTO> update(
             @PathVariable Long id,
-            @RequestBody StudentDTO dto) {
+            @Valid @RequestBody StudentDTO dto) {
 
-        Student updated = studentService.update(
-                id,
-                studentMapper.toEntity(dto)
-        );
-
-        return ResponseEntity.ok(
-                studentMapper.toDto(updated)
-        );
+        return ResponseEntity.ok(studentService.update(id, dto));
     }
 
-    // DELETE
+    /**
+     * Supprime un étudiant à partir de son identifiant.
+     *
+     * @param id identifiant de l'étudiant à supprimer
+     * @return réponse vide avec le statut HTTP 204 (NO CONTENT)
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-
         studentService.delete(id);
-
         return ResponseEntity.noContent().build();
     }
 }

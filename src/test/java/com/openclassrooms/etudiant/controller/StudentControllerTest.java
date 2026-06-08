@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -66,7 +67,7 @@ class StudentControllerTest {
         dto.setEmail("john@mail.com");
 
         given(studentMapper.toEntity(any())).willReturn(student);
-        given(studentService.create(any())).willReturn(student);
+        given(studentService.create(any())).willReturn(dto);
         given(studentMapper.toDto(any())).willReturn(dto);
 
         mockMvc.perform(post("/api/student")
@@ -99,8 +100,8 @@ class StudentControllerTest {
         dto.setId(1L);
         dto.setFirstName("John");
 
-        given(studentService.findAll()).willReturn(List.of(student));
-        given(studentMapper.toDtoList(any())).willReturn(List.of(dto));
+        given(studentService.findAll()).willReturn(List.of(dto));
+//        given(studentMapper.toDtoList(any())).willReturn(List.of(dto));
 
         mockMvc.perform(get("/api/student"))
                 .andExpect(status().isOk())
@@ -122,8 +123,8 @@ class StudentControllerTest {
         dto.setId(1L);
         dto.setFirstName("John");
 
-        given(studentService.findById(1L)).willReturn(student);
-        given(studentMapper.toDto(any())).willReturn(dto);
+        given(studentService.findById(1L)).willReturn(dto);
+//        given(studentMapper.toDto(1L)).willReturn(dto);
 
         mockMvc.perform(get("/api/student/1"))
                 .andExpect(status().isOk())
@@ -155,8 +156,8 @@ class StudentControllerTest {
         dto.setId(1L);
         dto.setFirstName("Jane");
 
-        given(studentService.update(any(), any())).willReturn(student);
-        given(studentMapper.toDto(any())).willReturn(dto);
+        given(studentService.update(eq(1L), any(StudentDTO.class))).willReturn(dto);
+//        given(studentMapper.toDto(any())).willReturn(dto);
 
         mockMvc.perform(put("/api/student/1")
                         .contentType(MediaType.APPLICATION_JSON)
